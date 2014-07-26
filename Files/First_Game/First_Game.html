@@ -1,0 +1,187 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Star Pilot!</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<p>Arrow Keys to Move, WASD to shoot. Good luck starpilot!
+<p id = "s">SCORE: <span id="score"></span></p>
+<p id = "hs">High Score: <span id = "highscore"></span></p></p>
+<script type="text/javascript">
+var scorespan = document.getElementById('score');
+var hsspan = document.getElementById('highscore');
+var score = 0;
+function updateScore(x){
+	hsspan.innerHTML = localStorage.getItem("hs");
+	scorespan.innerHTML = x;
+}
+var game = new Phaser.Game(800, 400, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var square;
+var cursors;
+var keys = [];
+var bullets;
+var enemies;
+var count = 0;
+var fireRate = 10;
+var explosions;
+var stateText;
+var gameOn = true;
+var score;
+
+function preload() {
+    game.load.image('sky', 'assets/sky.png');
+    game.load.image('square', 'assets/star.png');
+    game.load.image('bullet', 'assets/bullet.png');
+    game.load.spritesheet('enemy', 'assets/x.png', 220, 200, 1);
+    game.load.spritesheet('kaboom', 'assets/explode.png', 128, 128);
+}
+function create() {
+    //game.add.sprite(0, 0, 'sky');
+    square = game.add.sprite(350, 350, 'square');
+    square.body.collideWorldBounds = true;
+    cursors = game.input.keyboard.createCursorKeys();
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.W));
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.A));
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.S));
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.D));
+    bullets = game.add.group();
+    bullets.setAll('outOfBoundsKill', true);
+    enemies = game.add.group();
+    //  An explosion pool
+    explosions = game.add.group();
+    explosions.createMultiple(30, 'kaboom');
+    explosions.forEach(setupEnemy, this);
+    
+    stateText = game.add.text(game.world.centerX,game.world.centerY,'', { fontSize: '84px', fill: '#fff' });
+    stateText.anchor.setTo(0.5, 0.5);
+    stateText.visible = false;
+}
+function setupEnemy (enemy) {
+
+    //enemy.anchor.x = 0.5;
+    //enemy.anchor.y = 0.5;
+    enemy.animations.add('kaboom');
+
+}
+function update() {
+    if(gameOn){
+        updateScore(score);
+        //add score
+        move();
+        shoot();
+        if(count%25 == '0')
+        {
+            createEnemies(count);
+            if(count == '100')
+                count = 0;
+        }
+        count++;
+        if(bullets.length>0)
+            game.physics.overlap(bullets, enemies, collisionHandler, null, this);
+        game.physics.overlap(square, enemies, gameOver, null, this);
+    }
+        
+}
+function move(){
+    if(cursors.left.isDown)
+        square.body.velocity.x = -150;
+    else if(cursors.right.isDown)
+        square.body.velocity.x = 150;
+    else
+        square.body.velocity.x = 0;
+    if(cursors.up.isDown)
+        square.body.velocity.y = -150;
+    else if(cursors.down.isDown)
+        square.body.velocity.y = 150;
+    else
+        square.body.velocity.y = 0;
+}
+function shoot(){
+    //add bullet interval
+    fireRate--;
+    if(fireRate == '0')
+    {
+        fireRate = 10;
+        var bullet;
+        if(keys[0].isDown){
+            //w
+            bullet = bullets.create(square.body.x+7, square.body.y-38, 'bullet');
+            bullet.body.velocity.y = -500;
+        }
+        else if(keys[1].isDown){
+            //a
+            bullet = bullets.create(square.body.x-44, square.body.y+12, 'bullet');
+            bullet.angle = -90;
+            bullet.body.velocity.x = -500;
+        }
+        else if(keys[2].isDown){
+            //s
+            bullet = bullets.create(square.body.x+7, square.body.y+22, 'bullet');
+            bullet.body.velocity.y = 500;
+        }
+        else if(keys[3].isDown){
+            //d
+            bullet = bullets.create(square.body.x+60, square.body.y+7, 'bullet');
+            bullet.angle = 90;
+            bullet.body.velocity.x = 500;
+        }
+    }
+}
+function createEnemies(count)
+{
+    var enemy;
+    if(count == '25')
+        enemy = enemies.create(0, 200, 'enemy');
+    else if(count == '50')
+        enemy = enemies.create(200, 0, 'enemy');
+    else if(count == '75')
+        enemy = enemies.create(game.width, 200, 'enemy');
+    else if(count == '100')
+        enemy = enemies.create(200, game.height, 'enemy');  
+    else
+        enemy = enemies.create(0, 0);
+    var x = Math.floor(Math.random()*200-101);
+    var y = Math.floor(Math.random()*200-101);
+    enemy.body.collideWorldBounds = true;
+    enemy.body.velocity.x = x;
+    enemy.body.velocity.y = y;
+    enemy.body.bounce.x = 1;
+    enemy.body.bounce.y = 1;
+    enemy.scale.setTo(.2, .2);
+    // }
+}
+function collisionHandler(bullet, enemy)
+{
+    score++;
+    bullet.kill();
+    enemy.kill();
+    //  And create an explosion :)
+    var explosion = explosions.getFirstDead();
+    explosion.reset(enemy.body.x, enemy.body.y);
+    explosion.play('kaboom', 30, false, true);
+}
+function gameOver()
+{
+    square.body.velocity.x = 0;
+    square.body.velocity.y = 0;
+    enemies.callAll('destroy', '');
+    stateText.content="      GAME OVER \n Refresh to Restart";
+    stateText.visible = true;
+    gameOn = false;
+    if(score>localStorage.getItem("hs"))
+	{
+		localStorage.setItem("hs", score);
+	}
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Tron!</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+var blues;
+var reds;
+var blue;
+var red;
+var keys =[];
+var cursors;
+var sl;
+var rdir = [];
+var ldir = [];
+var count;
+var gameOn;
+
+function preload() 
+{
+    game.load.image('sky', 'assets/space2.png');
+    game.load.image('red', 'assets/redsquare.png');
+    game.load.image('blue', 'assets/bluesquare.png');
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.W));
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.A));
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.S));
+    keys.push(game.input.keyboard.addKey(Phaser.Keyboard.D));
+}
+function create() 
+{
+    game.add.sprite(0, 0, 'sky');
+    blues = game.add.group();
+    blue = blues.create(game.width/4, game.height/2, 'blue');
+    blue.scale.setTo(0.75, 0.75);
+    reds = game.add.group();
+    red = reds.create(game.width/4*3, game.height/2, 'red');
+    red.scale.setTo(0.75, 0.75);
+    
+    //input
+    cursors = game.input.keyboard.createCursorKeys();
+
+    
+    count = 0;
+    gameOn = true;
+    //sl = 25*0.75;
+    sl = 25;
+}
+function update() 
+{
+    if(gameOn)
+    {
+        pickKeys();
+        if(count%5 == '0')
+        {
+            move();
+            count = 0;
+        }
+        count++;
+        game.physics.overlap(blues, reds, gameOver, null, this);
+        game.physics.overlap(reds, blues, gameOver, null, this);
+        reds.forEachDead(overlap, this, reds.getFirstAlive());
+        blues.forEachDead(overlap, this, blues.getFirstAlive());
+        if(!red.inCamera)
+        {
+            gameOver();
+        }
+        if(!blue.inCamera)
+        {
+            gameOver();
+        }
+    }
+}
+function overlap(sprite1, sprite2)
+{
+    game.physics.overlap(sprite1, sprite2, gameOver, null, this, 3);
+}
+function pickKeys()
+{
+    if(cursors.left.isDown)
+    {
+        rdir[1] = true;
+        rdir[0] = false;
+        rdir[2] = false;
+        rdir[3] = false;
+    }
+    else if(cursors.right.isDown)
+    {
+        rdir[3] = true;
+        rdir[1] = false;
+        rdir[0] = false;
+        rdir[2] = false;
+    }
+    else if(cursors.up.isDown)
+    {
+        rdir[0] = true;
+        rdir[1] = false;
+        rdir[2] = false;
+        rdir[3] = false;
+    }
+    else if(cursors.down.isDown)
+    {
+        rdir[0] = false;
+        rdir[1] = false;
+        rdir[2] = true;
+        rdir[3] = false;
+    }
+    
+    if(keys[0].isDown)
+    {
+        ldir[0] = true;
+        ldir[1] = false;
+        ldir[2] = false;
+        ldir[3] = false;
+    }
+    else if(keys[1].isDown)
+    {
+        ldir[0] = false;
+        ldir[1] = true;
+        ldir[2] = false;
+        ldir[3] = false;
+    }
+    else if(keys[2].isDown)
+    {
+        ldir[0] = false;
+        ldir[1] = false;
+        ldir[2] = true;
+        ldir[3] = false;
+    }
+    else if(keys[3].isDown)
+    {
+        ldir[0] = false;
+        ldir[1] = false;
+        ldir[2] = false;
+        ldir[3] = true;
+    }
+}
+function move()
+{
+    if(rdir[0])
+    {
+        red.alive = false;
+        red = reds.create(red.body.x, red.body.y-sl, 'red');
+        red.alive = true;
+        red.scale.setTo(0.75, 0.75);
+    }
+    else if(rdir[1])
+    {
+        red.alive = false;
+        red = reds.create(red.body.x-sl, red.body.y, 'red');
+        red.alive = true;
+        red.scale.setTo(0.75, 0.75); 
+    }
+    else if(rdir[2])
+    {
+        red.alive = false;
+        red = reds.create(red.body.x, red.body.y+sl, 'red');
+        red.alive = true;
+        red.scale.setTo(0.75, 0.75); 
+    }
+    else if(rdir[3])
+    {
+        red.alive = false;
+        red = reds.create(red.body.x+sl, red.body.y, 'red');
+        red.alive = true;
+        red.scale.setTo(0.75, 0.75); 
+    }
+        
+    if(ldir[0])
+    {
+        blue.alive = false;
+        blue = blues.create(blue.body.x, blue.body.y-sl, 'blue');
+        blue.alive = true;
+        blue.scale.setTo(0.75, 0.75);
+    }
+    else if(ldir[1])
+    {
+        blue.alive = false;
+        blue = blues.create(blue.body.x-sl, blue.body.y, 'blue');
+        blue.alive = true;
+        blue.scale.setTo(0.75, 0.75); 
+    }
+    else if(ldir[2])
+    {
+        blue.alive = false;
+        blue = blues.create(blue.body.x, blue.body.y+sl, 'blue');
+        blue.alive = true;
+        blue.scale.setTo(0.75, 0.75); 
+    }
+    else if(ldir[3])
+    {
+        blue.alive = false;
+        blue = blues.create(blue.body.x+sl, blue.body.y, 'blue');
+        blue.alive = true;
+        blue.scale.setTo(0.75, 0.75); 
+    }
+        
+}
+function gameOver(x)
+{
+    //disable moving
+    for(var i = 0; i<rdir.length; i++)
+    {
+        rdir[i] = false;
+        ldir[i] = false;
+    }
+    //disable updating
+    gameOn = false;
+    //removeAll. Pretty self explanatory. 
+    game.world.removeAll();
+    create();
+}
+</script>
+</body>
+</html>

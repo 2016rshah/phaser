@@ -1,0 +1,58 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Canvas BMX!</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+            border-style:solid;
+            border-width:1px;
+        }
+    </style>
+</head>
+<body>
+<p>Controls?</p>
+<!--<p id = "s">SCORE: <span id="score"></span></p>-->
+<!--<p id = "hs">High Score: <span id = "highscore"></span></p>-->
+<script type="text/javascript">
+
+    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+    var biker;
+    var platforms;
+    
+    function preload()
+    {
+        game.load.image('sky', 'assets/blank.png');
+        game.load.image('ground', 'assets/ground.png');
+        game.load.image('biker', 'assets/biker.png');
+    }
+    function create()
+    {
+        game.add.sprite(0, 0, 'sky');
+        platforms = game.add.group();
+        var ground = platforms.create(0, game.height-64, 'ground');
+        ground.scale.setTo(1.5, 0.25);
+        ground.body.allowRotation = true;
+        //ground.body.rotation = .45;
+        ground.body.setAnchor
+        ground.body.angularVelocity = -2;
+        ground.body.immovable = true;
+        // console.log(ground.body.rotation);
+        // ground.body.rotation = 45;
+        // console.log(ground.body.rotation);
+        biker = game.add.sprite(0, 0, 'biker');
+        biker.body.bounce.y = 0.1;
+        biker.body.gravity.y = 6;
+        biker.body.collideWorldBounds = true;
+    }
+    function update()
+    {
+        game.physics.collide(biker, platforms);
+    }
+    
+
+</script>
+</body>
+</html>
