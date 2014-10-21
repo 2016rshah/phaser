@@ -1,0 +1,213 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Robots!</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="text/javascript">
+        
+        
+        var game = new Phaser.Game(800, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+        var player;
+        var enemies;
+        var keys = [];
+        var junk;
+        var level;
+        
+        function preload() {
+            game.load.image('blue', 'assets/square.png');
+            game.load.image('red', 'assets/redsquare.png');
+            level = 1;
+        }
+        
+        function create() {
+            player = game.add.sprite(500, 500, 'blue');
+            player.body.collideWorldBounds = true;
+            enemies = game.add.group();
+            createEnemies(level);
+            junk = game.add.group();
+            
+            
+            
+            
+            
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.Q));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.W));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.E));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.A));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.S));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.D));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.Z));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.X));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.C));
+            keys.push(game.input.keyboard.addKey(Phaser.Keyboard.R));
+            
+        }
+        function update() {
+                movePlayer();
+                collisions();
+        }
+        function createEnemies (x) {
+            var enemy;
+            x*=2;
+            for(var i = 0; i<x; i++){
+                enemy = enemies.create(Math.floor(Math.random()*800), Math.floor(Math.random()*800), 'red');
+                enemy.body.collideWorldBounds = true;
+            }
+        }
+        
+        function movePlayer(){
+            if(keys[0].isDown){
+                player.x-=5;
+                player.y-=5;
+                moveEnemies();
+            }
+            if(keys[1].isDown){
+                player.y-=5;
+                moveEnemies();
+            }
+            if(keys[2].isDown){
+                player.x+=5;
+                player.y-=5;
+                moveEnemies();
+            }
+            if(keys[3].isDown){
+                player.x-=5;
+                moveEnemies();
+            }
+            if(keys[4].isDown){
+                moveEnemies();
+            }
+            if(keys[5].isDown){
+                player.x+=5;
+                moveEnemies();
+            }
+            if(keys[6].isDown){
+                player.x-=5;
+                player.y+=5;
+                moveEnemies();
+            }
+            if(keys[7].isDown){
+                player.y+=5;
+                moveEnemies();
+            }
+            if(keys[8].isDown){
+                player.x+=5;
+                player.y+=5;
+                moveEnemies();
+            }
+            if(keys[9].isDown){
+                player.x = Math.floor(Math.random()*800);
+                player.y = Math.floor(Math.random()*800);
+            }
+        }
+        function moveEnemies(){
+            enemies.forEachAlive(moveEnemiesHelper, this);
+        }
+        function moveEnemiesHelper(enemy)
+        {
+                if(enemy.x<player.x)
+                    enemy.x+=5;
+                else if(enemy.x>player.x)
+                    enemy.x-=5;
+                if(enemy.y<player.y)
+                    enemy.y+=5;
+                else if(enemy.y>player.y)
+                    enemy.y-=5;
+        }
+        function collisions(){
+            //player with enemy and player with junk
+            if(game.physics.overlap(player, enemies) || game.physics.overlap(player, junk)){
+                enemies.removeAll(true);
+                junk.removeAll(true);
+                level = level-1;
+                if(level>=1){
+                    createEnemies(level);
+                    console.log("lose: "+level);
+                }
+                console.log("lost! level: "+level);
+            }
+            //enemy with enemy
+            var i = 0;
+            var j = 0;
+            for(i = 0; i<enemies.length; i++){
+                for(j = 0; j<enemies.length;j++){
+                    if(i!=j){
+                        if(game.physics.overlap(enemies.getAt(i), enemies.getAt(j))){
+                            junked(enemies.getAt(i), enemies.getAt(j));
+                        }
+                    }
+                }
+            }
+            i = 0;
+            for(i = 0; i<enemies.length; i++){
+                game.physics.overlap(enemies.getAt(i), junk, junked2);
+            }
+            game.physics.overlap(junk, enemies, collisionHandler, null, this);
+//            //enemy with junk
+//             i = 0;
+//             j = 0;
+//             for(i = 0; i<enemies.length; i++){
+//                 for(j = 0; j<junk.length; j++){
+//                     if(game.physics.overlap(enemies.getAt(i), junk.getAt(j))){
+//                         junked(enemies.getAt(i), junk.getAt(j));
+//                     }
+//                 }
+//             }
+            
+        }
+        function junked(enemy1, enemy2)
+        {
+            var j;
+            j = junk.create(enemy1.x, enemy1.y, 'red');
+            j.angle= 45;
+            enemy1.destroy();
+            enemy2.destroy();
+            if(enemies.countLiving()<1){
+                enemies.removeAll(false);
+                level= level+1;
+                if(level>=1){
+                    createEnemies(level);
+                    console.log("win: "+level);
+                }
+            }
+        }
+        function junked2(enemy1, group2){
+           
+            enemy1.destroy();
+            if(enemies.countLiving()<1){
+                enemies.removeAll(false);
+                level= level+1;
+                if(level>=1){
+                    createEnemies(level);
+                    console.log("win: "+level);
+                }
+            }
+        }
+        function collisionHandler(junk1, enemy1)
+        {
+            var j;
+            j = junk.create(enemy1.x, enemy1.y, 'red');
+            j.angle= 45;
+            junk1.kill();
+            enemy1.kill();
+            if(enemies.countLiving()<1){
+                enemies.removeAll(false);
+                level= level+1;
+                if(level>=1){
+                    createEnemies(level);
+                    console.log("win: "+level);
+                }
+            }
+        }
+        
+    </script>
+</body>
+</html>
